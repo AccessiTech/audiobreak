@@ -1,0 +1,29 @@
+# Node.js
+node_modules/
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# macOS
+.DS_Store
+
+# VSCode
+.vscode/
+
+# Logs
+*.log
+
+# Misc
+.env
+*.egg-info/
+
+# Build
+build/
+dist/
+
+# Frontend build
+frontend/dist/
