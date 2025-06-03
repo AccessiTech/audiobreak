@@ -2,37 +2,6 @@
 
 This project is a full stack web application with a Python (FastAPI) backend for scraping websites, applying business logic, and serving a React frontend. The backend exposes REST endpoints for scraping and data retrieval. The frontend allows users to specify a site to scrape, trigger the process, and view results.
 
-## Backend
-- Python 3, FastAPI, Uvicorn
-- Scrapes a specified website and applies business logic
-- Exposes REST API endpoints
-
-## Frontend (Vite + React)
-
-1. Install dependencies:
-   ```sh
-   cd frontend
-   npm install
-   ```
-2. Start the frontend dev server:
-   ```sh
-   npm run dev
-   ```
-
-The frontend runs on http://localhost:5173 by default. If you encounter CORS issues, you can use a Vite proxy. Add this to `frontend/vite.config.ts`:
-
-```ts
-// ...existing code...
-server: {
-  proxy: {
-    '/scrape': 'http://localhost:8000',
-  },
-},
-// ...existing code...
-```
-
-This will forward API requests to the FastAPI backend during development.
-
 ## Getting Started
 
 ### Clone the Repository
@@ -58,21 +27,35 @@ This will forward API requests to the FastAPI backend during development.
    ```
 
 ### Frontend
-Instructions for the frontend setup will be added after scaffolding the React app.
 
----
+1. Install dependencies:
+   ```sh
+   cd frontend
+   npm install
+   ```
+2. Start the frontend dev server:
+   ```sh
+   npm run dev
+   ```
+
+The frontend runs on http://localhost:5173 by default. If you encounter CORS issues, you can use a Vite proxy. Add this to `frontend/vite.config.ts`:
+
+```ts
+// ...existing code...
+server: {
+  proxy: {
+    '/scrape': 'http://localhost:8000',
+  },
+},
+// ...existing code...
+```
+
+This will forward API requests to the FastAPI backend during development.
 
 ## Project Structure
 - `/main.py` — FastAPI backend entry point
 - `/requirements.txt` — Python dependencies
 - `/frontend/` — React frontend (to be created)
-
----
-
-## License
-MIT
-
----
 
 ## About This Project & AI Collaboration
 
