@@ -38,7 +38,7 @@ This will forward API requests to the FastAPI backend during development.
 ### Clone the Repository
 1. Clone the repository to your local machine:
    ```sh
-   git clone <your-repo-url> audiobreak
+   git clone https://github.com/AccessiTech/audiobreak
    cd audiobreak
    ```
 
