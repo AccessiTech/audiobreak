@@ -7,15 +7,13 @@ This project is a full stack web application with a Python (FastAPI) backend for
 ### Clone the Repository
 1. Clone the repository to your local machine:
    ```sh
-   git clone https://github.com/AccessiTech/audiobreak
-   cd audiobreak
+   git clone https://github.com/AccessiTech/audiobreak && cd audiobreak
    ```
 
 ### Backend
 1. Create and activate the virtual environment:
    ```sh
-   python3 -m venv venv
-   source venv/bin/activate
+   python3 -m venv venv && source venv/bin/activate
    ```
 2. Install dependencies:
    ```sh
@@ -30,8 +28,7 @@ This project is a full stack web application with a Python (FastAPI) backend for
 
 1. Install dependencies:
    ```sh
-   cd frontend
-   npm install
+   cd frontend && npm install
    ```
 2. Start the frontend dev server:
    ```sh
