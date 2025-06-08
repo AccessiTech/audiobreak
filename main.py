@@ -36,11 +36,20 @@ class ScrapeRequest(BaseModel):
     pagination_type: Optional[str] = "next"  # "next" or "list"
     pagination_links: Optional[list[str]] = None  # NEW: explicit pagination links
 
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+    "Referer": "https://www.google.com/"
+}
+
 @app.post("/scrape")
 def scrape_site(request: ScrapeRequest):
     def scrape_single(url):
         try:
-            response = requests.get(url)
+            response = requests.get(url, headers=HEADERS)
             response.raise_for_status()
         except Exception as e:
             return None, None, str(e), []
@@ -57,14 +66,15 @@ def scrape_site(request: ScrapeRequest):
             results = [el.text for el in elements]
         # Scrape media assets if requested
         media_assets = []
-        from urllib.parse import urlparse, urlunparse
+        from urllib.parse import urlparse, urlunparse, urljoin
         if request.media_types:
             for mtype in request.media_types:
                 if mtype == 'img':
                     for tag in soup.find_all('img'):
                         src = tag.get('src')
                         if src:
-                            # Remove query string from URL
+                            # Make absolute URL
+                            src = urljoin(url, src)
                             parsed = urlparse(src)
                             clean_src = urlunparse(parsed._replace(query=''))
                             media_assets.append({'url': clean_src, 'type': 'img'})
@@ -72,13 +82,15 @@ def scrape_site(request: ScrapeRequest):
                     for tag in soup.find_all('audio'):
                         src = tag.get('src')
                         if src:
+                            src = urljoin(url, src)
                             parsed = urlparse(src)
                             clean_src = urlunparse(parsed._replace(query=''))
                             media_assets.append({'url': clean_src, 'type': 'audio'})
                     for tag in soup.find_all('source'):
-                        if tag.parent.name == 'audio':
+                        if tag.parent and tag.parent.name == 'audio':
                             src = tag.get('src')
                             if src:
+                                src = urljoin(url, src)
                                 parsed = urlparse(src)
                                 clean_src = urlunparse(parsed._replace(query=''))
                                 media_assets.append({'url': clean_src, 'type': 'audio'})
@@ -86,13 +98,15 @@ def scrape_site(request: ScrapeRequest):
                     for tag in soup.find_all('video'):
                         src = tag.get('src')
                         if src:
+                            src = urljoin(url, src)
                             parsed = urlparse(src)
                             clean_src = urlunparse(parsed._replace(query=''))
                             media_assets.append({'url': clean_src, 'type': 'video'})
                     for tag in soup.find_all('source'):
-                        if tag.parent.name == 'video':
+                        if tag.parent and tag.parent.name == 'video':
                             src = tag.get('src')
                             if src:
+                                src = urljoin(url, src)
                                 parsed = urlparse(src)
                                 clean_src = urlunparse(parsed._replace(query=''))
                                 media_assets.append({'url': clean_src, 'type': 'video'})
@@ -100,6 +114,7 @@ def scrape_site(request: ScrapeRequest):
                     for tag in soup.find_all('a', href=True):
                         href = tag['href']
                         if href.lower().endswith('.pdf'):
+                            href = urljoin(url, href)
                             parsed = urlparse(href)
                             clean_href = urlunparse(parsed._replace(query=''))
                             media_assets.append({'url': clean_href, 'type': 'pdf'})
@@ -107,12 +122,14 @@ def scrape_site(request: ScrapeRequest):
                     for tag in soup.find_all('img'):
                         src = tag.get('src')
                         if src and src.lower().endswith('.svg'):
+                            src = urljoin(url, src)
                             parsed = urlparse(src)
                             clean_src = urlunparse(parsed._replace(query=''))
                             media_assets.append({'url': clean_src, 'type': 'svg'})
                     for tag in soup.find_all('object'):
                         data = tag.get('data')
                         if data and data.lower().endswith('.svg'):
+                            data = urljoin(url, data)
                             parsed = urlparse(data)
                             clean_data = urlunparse(parsed._replace(query=''))
                             media_assets.append({'url': clean_data, 'type': 'svg'})
@@ -146,11 +163,12 @@ def scrape_site(request: ScrapeRequest):
     all_media = []
     errors = []
     visited = set()
-    # If explicit pagination_links are provided, use them as the to_visit list (and only those)
-    if request.pagination_links:
+    # If explicit pagination_links are provided and not empty, use them as the to_visit list (and only those)
+    if request.pagination_links and len(request.pagination_links) > 0:
         # Only use the provided pagination links for scraping (do not add the main url again)
         to_visit = list(dict.fromkeys(request.pagination_links))
     else:
+        # Always use the main url if no pagination links are provided
         to_visit = [request.url]
     scraped_pages = []
     list_pagination_urls = set()
@@ -160,7 +178,7 @@ def scrape_site(request: ScrapeRequest):
     if request.pagination_selector:
         print(f"Fetching initial page for pagination selector: {request.pagination_selector}")
         try:
-            response = requests.get(request.url)
+            response = requests.get(request.url, headers=HEADERS)
             response.raise_for_status()
             soup = BeautifulSoup(response.text, "html.parser")
             found_any = False
@@ -287,9 +305,10 @@ def scrape_metadata(request: ScrapeRequest):
     Initial endpoint to detect pagination links and provide metadata for UI configuration.
     """
     try:
-        response = requests.get(request.url)
+        response = requests.get(request.url, headers=HEADERS)
         response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html.parser")
+        html = response.content
+        soup = BeautifulSoup(html, "html.parser")
     except Exception as e:
         return {"error": str(e)}
 
@@ -314,14 +333,11 @@ def scrape_metadata(request: ScrapeRequest):
     similar_links = []
     for a in soup.find_all('a', href=True):
         href = a['href']
-        # Make absolute
         abs_href = urljoin(base_url, href)
         parsed_href = urlparse(abs_href)
-        # Heuristic: same domain, path starts with base path, and has a number or 'page' in it
         if parsed_href.netloc == base_netloc and parsed_href.path.startswith(base_path):
             if re.search(r'(page|p=|[0-9]{1,3})', abs_href, re.IGNORECASE):
                 similar_links.append(abs_href)
-    # Deduplicate and limit examples
     similar_links = list(dict.fromkeys(similar_links))[:10]
 
     # Detect available media types
@@ -338,12 +354,23 @@ def scrape_metadata(request: ScrapeRequest):
         if soup.select_one(sel):
             main_selectors.append(sel)
 
+    # Debug info: count elements and show first 500 chars of text
+    debug_info = {
+        "parsed_title": soup.title.string.strip() if soup.title and soup.title.string else None,
+        "img_count": len(soup.find_all('img')),
+        "audio_count": len(soup.find_all('audio')),
+        "video_count": len(soup.find_all('video')),
+        "a_count": len(soup.find_all('a')),
+        "first_500_text": soup.get_text()[:500]
+    }
     return {
         "pagination_candidates": pagination_candidates,
         "pagination_similar_links": similar_links,
         "media_types": list(media_types),
         "main_selectors": main_selectors,
-        "title": soup.title.string.strip() if soup.title and soup.title.string else None
+        "title": soup.title.string.strip() if soup.title and soup.title.string else None,
+        "raw_html": html.decode(errors='replace') if isinstance(html, bytes) else html,
+        "debug": debug_info
     }
 
 # In-memory progress store (for demo; use Redis for production)

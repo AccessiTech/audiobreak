@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Tabs, Tab, Table, Button, Form, InputGroup, Alert, Spinner, Collapse, ProgressBar } from 'react-bootstrap';
+import { Tabs, Tab, Table, Button, Form, Alert, Spinner, Collapse, ProgressBar } from 'react-bootstrap';
 
 const MEDIA_OPTIONS = [
   { label: 'Audio', value: 'audio' },

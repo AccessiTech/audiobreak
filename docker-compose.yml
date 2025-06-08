@@ -1,0 +1,11 @@
+# Docker Compose for full stack app
+# version field removed as it's optional and deprecated in Compose v2+
+services:
+  audiobreak:
+    build: .
+    ports:
+      - "9876:80"   # Frontend (Nginx) now mapped to 9876
+      - "8000:8000" # Backend (FastAPI, optional for direct API access)
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped

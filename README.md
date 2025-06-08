@@ -52,6 +52,52 @@ server: {
 
 This will forward API requests to the FastAPI backend during development.
 
+## Docker
+
+To build and run the full stack app with Docker (frontend + backend):
+
+1. Build and start the containers:
+   ```sh
+   docker compose up --build
+   ```
+
+2. Access the app from your browser at:
+   - `http://localhost:9876/` (from the host machine)
+   - `http://<host-ip>:9876/` (from other devices on your local network)
+
+The frontend is served by Nginx on port 9876 and all API requests are proxied to the FastAPI backend (port 8000).
+
+To stop the AudioBreak container only:
+```sh
+docker compose stop audiobreak
+```
+
+### Running the Docker Image on a Remote Server
+
+To deploy and run this app on a remote server:
+
+1. Copy the project files to your server (or build the image locally and push to a registry).
+2. On the server, build and start the containers:
+   ```sh
+   docker compose up --build -d
+   ```
+   The `-d` flag runs the containers in detached mode.
+
+3. Open port 9876 (and 8000 if you want direct API access) in your server's firewall/security group.
+
+4. Access the frontend from any device:
+   - `http://<server-ip>:9876/`
+
+5. (Optional) To rebuild after code changes:
+   ```sh
+   docker compose up --build -d
+   ```
+
+6. To stop the AudioBreak container only:
+   ```sh
+   docker compose stop audiobreak
+   ```
+
 ## Project Structure
 - `/main.py` — FastAPI backend entry point
 - `/requirements.txt` — Python dependencies
